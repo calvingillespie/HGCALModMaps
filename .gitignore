@@ -1,9 +1,5 @@
 # Specify filepatterns you want git to ignore.
-Useless.py
-Useless.py
-TestDXFfiles/Cassette_*
-TestDXFfiles
-ExamplesMaps
-ExamplesMaps/*
-*.json
-PrintDF.py
+# Ignore all AutoCAD DXF files
+*.dxf
+__pycache__/
+*.py[cod]

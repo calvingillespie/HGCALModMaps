@@ -12,12 +12,11 @@ These can be installed with the typical pip install or using the requirements.tx
 ## Syntax and Naming Conventions
 After copying the repository, you can make individual .dxf and .json files using the command:  
 ```
-python3 Trainbased_ModMapBuilder.py 33 2  #args: layer number, cassette number
+python3 Trainbased_ModMapBuilder.py 33 2 pq #args: layer number, cassette number, coordinate type
 ```
 This will save a .dxf file to the specified output folder at the end of the script.  The script defaults to an output folder called TestDXFfiles.  Then it will create a .json file, saving it to the current working directory. These files have the naming convention:
 
-
-Cassette_'layer number'_'cassette number'.'file type'  
+Cassette_'layer number'_'cassette number'.'file type'
 
 
 The layers go from 27 to 47 and each layer has 4 cassettes.

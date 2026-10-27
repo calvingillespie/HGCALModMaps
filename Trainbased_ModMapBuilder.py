@@ -2,6 +2,7 @@
 # To use run: python3 Trainbased_ModMapBuilder.py "Layer number" "Cassette number/letter"
 # To change output folder, go to the "saving objects to file" section at the very end and change the variable "output_folder"
 
+
 import ezdxf
 import pandas as pd
 import os
@@ -15,6 +16,7 @@ import train_func
 
 layer = int(sys.argv[1])
 cassnum = (sys.argv[2])
+coords = (sys.argv[3])
 
 #Changing the cassette labels based on the layer
 if layer <= 33 and layer % 2 == 1: #Odd numbered layer before 33
@@ -50,7 +52,13 @@ style.dxf.width = 1.5
 
 
 # Changed delim_whitespace=True to sep=r'\s+' to resolve the FutureWarning
-df = pd.read_csv("Active Geometry SIPM Tile Data 2026.csv")
+
+#geometry_sipmontile.hgcal.txt
+#Active Geometry SIPM Tile Data 2026.csv
+#geometry_sipmontile.hgcal.txt
+
+df = pd.read_csv('geometry_sipmontile.hgcal.txt', sep=r'\s+')
+#df = pd.read_csv("Active Geometry SIPM Tile Data 2026.csv")
 json_df = pd.read_csv('geometry_simotherboards.hgcal.txt', sep=r'\s+')
 
 # Wrapped both conditions in parentheses inside the main brackets
@@ -67,8 +75,9 @@ col = [
     'plane','u','v','itype','typecode',
     'x0','y0','irot','nvertices', 'vx_0','vy_0','vx_1','vy_1','vx_2','vy_2',
     'vx_3','vy_3','vx_4','vy_4','vx_5','vy_5','vx_6','vy_6','isEngine','icassette',
-    'MB', 'wagon', "trigLinks", 'HDorLD', 'dataLinks_ld', 'dataLinks_hd'
+    'MB', 'wagon', "trigLinks", 'HDorLD', 'dataLinks_ld', 'dataLinks_hd','p','q'
 ]
+
 cass_df = df[col]
 cass_json_df = json_df[col]
 print("Creating cassette dataframe...")
@@ -82,6 +91,10 @@ train_labels_LD = []
 train_labels_HD = []
 train_id = cass_df['MB'].unique().tolist() #List of unique MB values
 
+#Note for reader:
+#This grabs the data from the CSV, restrict it with the info columns to those listed in col, and makes a train_df with unique trains.
+#It appears that all lists are organized where each row aligns, so id 0 in one list is the same id in another.
+#The Mother board ID is used to distinguish trains, as well as which part it connects to
 
 ############Train Labeling###############
 
@@ -117,6 +130,8 @@ for train in train_id:
     elif train not in isScint:
         max_coords = max(train_df['Mod_center'], key=lambda item: item[1])
         train_labels_LD.append((train, max_coords[1]))
+
+#
 
 train_labels_LD.sort(key=lambda x: x[1], reverse=True)
 train_labels_HD.sort(key=lambda x: x[1], reverse=True)
@@ -174,9 +189,13 @@ for train in train_id:
     #print(engine_json_df)
     engine_center = train_func.find_module_vertices(engine_df.squeeze())[1]
     if train not in isScint:
-        u = float(engine_json_df["u"])
-        v = float(engine_json_df["v"])
+        
+        u = (engine_json_df["u"])
+        v = (engine_json_df["v"])
         type = engine_json_df["typecode"]
+
+        p = (engine_json_df["p"])
+        q = (engine_json_df["q"])
 
     wagon_json_df = train_json_df[train_json_df.isEngine == "0"]
     wagon_json_df = wagon_json_df.squeeze()
@@ -184,7 +203,7 @@ for train in train_id:
     #Adding engine and wagon info to json dictionaries
     if train in isHD:
         wagon_type = wagon_json_df["typecode"]
-        json_info[f"{layer}{cass_label[cassnum]}"][f"{train_labels[str(train)]}"].update({"engine":{"u":u, 'v':v, 'type':type}, "wagon_type":wagon_type})
+        json_info[f"{layer}{cass_label[cassnum]}"][f"{train_labels[str(train)]}"].update({"engine":{"u":u, 'v':v, "p":p, 'q':q, 'type':type}, "wagon_type":wagon_type})
     elif train in isScint:
         if train > 37:
             wingboard = 'WM-MBH'
@@ -198,7 +217,7 @@ for train in train_id:
         else:
             wagon_east = wagon_json_df["typecode"].iloc[0]
             wagon_west = wagon_json_df["typecode"].iloc[1]                                                        
-        json_info[f"{layer}{cass_label[cassnum]}"][f"{train_labels[str(train)]}"].update({"engine":{"u":u, 'v':v, 'type':type}, "wagon_west":wagon_west, "wagon_east":wagon_east})
+        json_info[f"{layer}{cass_label[cassnum]}"][f"{train_labels[str(train)]}"].update({"engine":{"u":u, 'v':v, "p":p, 'q':q, 'type':type}, "wagon_west":wagon_west, "wagon_east":wagon_east})
 
     #print(json_info)
 
@@ -290,36 +309,58 @@ for train in train_id:
 
         ############Drawing each module###############
 
+        text_color = 0;
+
         for index, row in sub_train_df.iterrows():
             #Setting color
             if train_num == 1:
-                color = 32
+                color = 117
+                text_color = 0
             elif train_num == 2:
                 color = 42
+                text_color = 16
             elif train_num == 3:
                 color = 82
+                text_color = 0
             elif train_num == 4:
                 color = 122
+                text_color = 0
             elif train_num == 5:
                 color = 152
+                text_color = 16
             elif train_num == 6:
                 color = 202
+                text_color = 0
             elif train_num == 7:
                 color = 222
+                text_color = 0
             elif train_num == 8:
                 color = 242
+                text_color = 16
             else:
-                color = 62
+                color = 147
+                text_color = 0 
             
             #Getting vertex coordinates and drawing shape
             module_coords = train_func.find_module_vertices(row)[0]
 
             #Initialize the hatch to add fill color
+
+            background = msp.add_hatch()
+            background.set_solid_fill(color=7)  # ACI 7 = white/black depending on display
+            background.paths.add_polyline_path(module_coords, is_closed=True)
+
             hatch = msp.add_hatch()
 
-            #Set the ACI color directly on the hatch entity 
+            #Set the ACI color directly on the hatch entity - Solid Colour Version
             hatch.dxf.color = color
-            hatch.set_solid_fill(color=color)
+            #hatch.set_solid_fill(color=color) #re-enable for a solid fill
+
+            #Set the ACI Colour in  a Diagonal Strip pattern on the hatch entity
+
+
+            hatch.set_pattern_fill(name="ANSI31",color=color,angle=30,scale=4.0)
+
 
             #Add the closed polyline path to the hatch
             hatch.paths.add_polyline_path(module_coords, is_closed=True)
@@ -369,39 +410,53 @@ for train in train_id:
             else:
                 daqLinks = row.dataLinks_hd
 
-            module_dict = {'u':row.u, 'v':row.v, 'type':row.typecode, 'i_rot':row.irot, 'trigLinks':row.trigLinks, 'daqLinks':daqLinks}
+            module_dict = {'u':row.u, 'v':row.v, 'p':row.p, 'q':row.q, 'type':row.typecode, 'i_rot':row.irot, 'trigLinks':row.trigLinks, 'daqLinks':daqLinks}
             if row.MB in isScint:
                 json_info[f"{layer}{cass_label[cassnum]}"][f"{Scint_train_label}{Scint_train_num}"].update({module_text:module_dict})
             else:    
                 json_info[f"{layer}{cass_label[cassnum]}"][f"{train_labels[str(train)]}"].update({module_text:module_dict})
+            
+            if coords == "uv":
+                module_text += f"\n{{\\H23;({row.u},{row.v})}}" # <--- Change "H23" to change u,v text size
+            elif coords == "pq":
+               module_text += f"\n{{\\H23;({row.p},{row.q})}}" 
 
-            module_text += f"\n{{\\H23;({row.u},{row.v})}}" # <--- Change "H23" to change u,v text size
+            else:
+               sys.exit("Coordinate type not selected")
 
             #Adapts text size based on module types
             num_vertices = int(row["nvertices"])
+
+            #Coords adjustment for partials
+
+            x = float(row.Mod_center[0])
+            y = float(row.Mod_center[1])
+
             if row.MB in isScint:
                 text_size = 40
+                insert = (x,y)
             elif num_vertices == 4:
                 text_size = 28
+                insert = (x,y+20);
             elif num_vertices == 5:
                 text_size = 32
+                insert = (x,y)
             else:
                 text_size = 35
-
+                insert = (x,y)
 
             #Printing the Module text
             msp.add_mtext(  #mtext allows for multi-line text to be printed
             module_text, 
             dxfattribs={
-                "color": 250,
+                "color": text_color,
                 "style": "BoldStyle",
                 "char_height": text_size,  # <--- Go to if else above to change text size of module labels
                 "layer": "TEXT"
             }
-        ).set_location(
-            insert=row.Mod_center,                         # The coordinate point
-            attachment_point=5  # The MTEXT equivalent of CENTER
-        )
+        ).set_location(insert = insert ,attachment_point=5 )
+        #Set Location of text
+
 
         ############Adding labeling to the edges of each train###############
 
@@ -432,7 +487,7 @@ casstxt = "Cassette "+str(layer-26)+str(cass_label[cassnum])+"("+str(layer)+str(
 msp.add_mtext(  #mtext allows for multi-line text to be printed
 casstxt, 
 dxfattribs={
-    "color": 8,
+    "color": 0,
     "style": "BoldStyle",
     "char_height": 65,  # <--- Change this to change cassette label text size
     "layer": "TEXT"
@@ -447,16 +502,32 @@ print("Adding Engines...")
 for engine_info in engine_locations:
     train_func.draw_solid_dot(msp, engine_info[0], 15, engine_info[1])
 
+#######################################################################
+# Ensure your output folders exist before saving into them
+os.makedirs("JSON_files", exist_ok=True)
+os.makedirs("DXF_files", exist_ok=True)
+
 ############Saving objects to file#############
 #Creating json file
-filename = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"("+str(layer)+str(cass_label[cassnum])+").json"
-with open(filename, 'w', encoding='utf-8') as file:
+
+"""
+
+json_filename = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"("+str(layer)+str(cass_label[cassnum])+").json"
+json_folder = "JSON_files"
+json_path = os.path.join(json_folder, json_filename)
+
+# Write the actual JSON data into the correct subfolder path
+with open(json_path, 'w', encoding='utf-8') as file:
     json.dump(json_info, file, indent=4, ensure_ascii=False)
+
+print("Saving to " + json_path)
+
+"""
 
 #Creating dxf file
 filename = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"("+str(layer)+str(cass_label[cassnum])+").dxf"
 
-output_folder = "TestDXFfiles" # <---- Change to what you want your output folder to be
+output_folder = "DXF_files" # <---- Change to what you want your output folder to be
 
 file_path = os.path.join(output_folder, filename)
 doc.saveas(file_path)
