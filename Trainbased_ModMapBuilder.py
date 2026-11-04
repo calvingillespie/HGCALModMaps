@@ -10,27 +10,32 @@ import numpy as np
 import sys
 import json
 import train_func
-
+import subprocess
 
 ############Inputs for Cassette and Layer Number###############
 
 layer = int(sys.argv[1])
 cassnum = (sys.argv[2])
 coords = (sys.argv[3])
+layout =0
 
 #Changing the cassette labels based on the layer
 if layer <= 33 and layer % 2 == 1: #Odd numbered layer before 33
     cass_dict = {'A':1, 'B':2, 'C':3, 'D':4}
     cass_label = {1:'A', 2:'B', 3:'C', 4:'D'}
+    layout = 1
 elif layer <= 33 and layer % 2 == 0: #Even numbered layer before 33
     cass_dict = {'A':1, 'B':2, 'C':3, 'D':4}
     cass_label = {1:'A', 2:'B', 3:'C', 4:'D'} 
+    layout = 2
 elif layer > 33 and layer % 2 == 1:  #Odd numbered layer after 33
     cass_dict = {'C':1, 'D':2, 'A':3, 'B':4}
     cass_label = {1:'C', 2:'D', 3:'A', 4:'B'}
+    layout = 3
 else: #Even numbered layer after 33
     cass_dict = {'A':1, 'B':2, 'C':3, 'D':4}
     cass_label = {1:'A', 2:'B', 3:'C', 4:'D'}    
+    layout = 4
 
 if cassnum in cass_dict:
     cassnum = cass_dict[cassnum]
@@ -138,12 +143,23 @@ train_labels_HD.sort(key=lambda x: x[1], reverse=True)
 
 #Creating dictionary for the module labels
 train_labels = {}
-for i in range(len(train_labels_LD)):
-    train_labels[str(train_labels_LD[i][0])] = "LD" + str(i+1)
-for i in range(len(train_labels_HD)):
-    train_labels[str(train_labels_HD[i][0])] = "HD" + str(i+1)
 
+#if layer is odd and A or C, Flip
 
+#if layer is even, then keep as such
+
+if cassnum == 2 or cassnum == 4: # A and C Cassettes
+    for i in range(len(train_labels_LD)):
+        train_labels[str(train_labels_LD[i][0])] = "LD" + str(i+1)
+    for i in range(len(train_labels_HD)):
+        train_labels[str(train_labels_HD[i][0])] = "HD" + str(i+1)
+else: # B and D Cassettes
+    temp_one = len(train_labels_LD)
+    temp_two = len(train_labels_HD)
+    for i in range(len(train_labels_LD)):
+        train_labels[str(train_labels_LD[i][0])] = "LD" + str(temp_one-i)
+    for i in range(len(train_labels_HD)):
+        train_labels[str(train_labels_HD[i][0])] = "HD" + str(temp_two-i)
 ############Drawing the modules train by train###############
 
 #Defining variables used for coloring and labeling
@@ -525,10 +541,23 @@ print("Saving to " + json_path)
 """
 
 #Creating dxf file
-filename = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"("+str(layer)+str(cass_label[cassnum])+").dxf"
+filename = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"_"+str(layer)+str(cass_label[cassnum])+".dxf"
+pdfname  = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"_"+str(layer)+str(cass_label[cassnum])+".pdf"
 
 output_folder = "DXF_files" # <---- Change to what you want your output folder to be
 
 file_path = os.path.join(output_folder, filename)
+pdf_path = os.path.join(output_folder, pdfname)
+
 doc.saveas(file_path)
 print("Saving to "+file_path) 
+
+subprocess.run([
+    "inkscape",
+    file_path,
+    "--export-area-drawing",
+    f"--export-filename={pdf_path}",
+    "--actions=select-all;transform-scale:0.05"
+], check=True)
+
+print("Exported PDF")

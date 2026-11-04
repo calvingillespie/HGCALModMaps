@@ -9,6 +9,9 @@ To run this you will need the following python libraries installed:
 
 These can be installed with the typical pip install or using the requirements.txt file.
 
+After installing, run this command on the DXF_files
+chmod -R 777 DXF_files
+
 ## Syntax and Naming Conventions
 After copying the repository, you can make individual .dxf and .json files using the command:  
 ```
@@ -31,3 +34,12 @@ for i in {27..47}; do
 	done
 done
 ```
+
+
+To make a pdf, run the following:
+
+  inkscape FILENAME.dxf \
+  --export-area-drawing \
+  --export-filename=FILENAME.pdf \
+  --actions="select-all;transform-scale:0.05"
+

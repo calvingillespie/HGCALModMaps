@@ -3,3 +3,6 @@
 *.dxf
 __pycache__/
 *.py[cod]
+*.pdf
+*.svg
+*.json
