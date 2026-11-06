@@ -30,7 +30,7 @@ To run through mulitple layers and their cassettes, use the bash script shown be
 ```
 for i in {27..47}; do
 	for j in {1..4}; do
-		python3 Trainbased_ModMapBuilder.py "$i" "$j"
+		python3 Trainbased_ModMapBuilder.py "$i" "$j" pq
 	done
 done
 ```

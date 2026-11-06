@@ -166,6 +166,8 @@ else: # B and D Cassettes
 train_num = 0
 Scint_train_num = 3
 engine_locations = []
+temp = 0
+
 
 print("Drawing Modules...")
 for train in train_id:
@@ -330,32 +332,32 @@ for train in train_id:
         for index, row in sub_train_df.iterrows():
             #Setting color
             if train_num == 1:
-                color = 117
-                text_color = 0
+                color = 117 #original
+                text_color = 255
             elif train_num == 2:
                 color = 42
-                text_color = 16
+                text_color = 250
             elif train_num == 3:
                 color = 82
-                text_color = 0
+                text_color = 255
             elif train_num == 4:
                 color = 122
-                text_color = 0
+                text_color = 255
             elif train_num == 5:
                 color = 152
-                text_color = 16
+                text_color = 250
             elif train_num == 6:
                 color = 202
-                text_color = 0
+                text_color = 255
             elif train_num == 7:
                 color = 222
-                text_color = 0
+                text_color = 255
             elif train_num == 8:
                 color = 242
-                text_color = 16
+                text_color = 250
             else:
                 color = 147
-                text_color = 0 
+                text_color = 255
             
             #Getting vertex coordinates and drawing shape
             module_coords = train_func.find_module_vertices(row)[0]
@@ -477,13 +479,27 @@ for train in train_id:
         ############Adding labeling to the edges of each train###############
 
         t_label_coords = train_func.find_traintext_loc(layer, cassnum, row, train_df, isHD, isScint)
+        
 
+     
+        #Invert for B and D
         #Adding text for train labels
-        if row.MB in isScint:
-            train_text = Scint_train_label + str(Scint_train_num)
-            Scint_train_num -= 1
-        else:
-            train_text = train_labels[str(row.MB)]
+
+        if cassnum == 2 or cassnum == 4: # B and D Cassettes
+
+            if row.MB in isScint:
+                  train_text = Scint_train_label + str(3 - temp)
+                  temp += 1
+            else:
+                  train_text = train_labels[str(row.MB)]
+
+        else: # B and D Cassettes
+            if row.MB in isScint:
+                  train_text = Scint_train_label + str(1 + temp)
+                  temp += 1
+            else:
+                  train_text = train_labels[str(row.MB)]
+        print (temp)
 
         msp.add_mtext(  #mtext allows for multi-line text to be printed
             train_text, 
@@ -553,6 +569,7 @@ doc.saveas(file_path)
 print("Saving to "+file_path) 
 
 subprocess.run([
+    "sudo",
     "inkscape",
     file_path,
     "--export-area-drawing",
