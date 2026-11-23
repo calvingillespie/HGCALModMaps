@@ -80,7 +80,7 @@ col = [
     'plane','u','v','itype','typecode',
     'x0','y0','irot','nvertices', 'vx_0','vy_0','vx_1','vy_1','vx_2','vy_2',
     'vx_3','vy_3','vx_4','vy_4','vx_5','vy_5','vx_6','vy_6','isEngine','icassette',
-    'MB', 'wagon', "trigLinks", 'HDorLD', 'dataLinks_ld', 'dataLinks_hd','p','q'
+    'MB', 'wagon', "trigLinks", 'HDorLD', 'dataLinks_ld', 'dataLinks_hd','p','q', 'nROCs'
 ]
 
 cass_df = df[col]
@@ -211,6 +211,7 @@ for train in train_id:
         u = (engine_json_df["u"])
         v = (engine_json_df["v"])
         type = engine_json_df["typecode"]
+        nRocs = engine_json_df["nROCs"]
 
         p = (engine_json_df["p"])
         q = (engine_json_df["q"])
@@ -428,7 +429,7 @@ for train in train_id:
             else:
                 daqLinks = row.dataLinks_hd
 
-            module_dict = {'u':row.u, 'v':row.v, 'p':row.p, 'q':row.q, 'type':row.typecode, 'i_rot':row.irot, 'trigLinks':row.trigLinks, 'daqLinks':daqLinks}
+            module_dict = {'u':row.u, 'v':row.v, 'p':row.p, 'q':row.q, 'type':row.typecode, 'nROCs':row.nROCs, 'i_rot':row.irot, 'trigLinks':row.trigLinks, 'daqLinks':daqLinks}
             if row.MB in isScint:
                 json_info[f"{layer}{cass_label[cassnum]}"][f"{Scint_train_label}{Scint_train_num}"].update({module_text:module_dict})
             else:    
@@ -542,19 +543,18 @@ os.makedirs("DXF_files", exist_ok=True)
 ############Saving objects to file#############
 #Creating json file
 
-"""
 
-json_filename = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"("+str(layer)+str(cass_label[cassnum])+").json"
+
+json_filename = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"_"+str(layer)+str(cass_label[cassnum])+".json"
 json_folder = "JSON_files"
 json_path = os.path.join(json_folder, json_filename)
 
 # Write the actual JSON data into the correct subfolder path
 with open(json_path, 'w', encoding='utf-8') as file:
-    json.dump(json_info, file, indent=4, ensure_ascii=False)
+    json.dump(json_info, file, indent=4, ensure_ascii=False, default=int)
 
 print("Saving to " + json_path)
 
-"""
 
 #Creating dxf file
 filename = "Cassette_"+str(layer-26)+str(cass_label[cassnum])+"_"+str(layer)+str(cass_label[cassnum])+".dxf"
